@@ -1,25 +1,90 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template"
+author: "KA"
+date: "May 30, 2017"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-## Loading and preprocessing the data
+## R Markdown
 
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 
-## Imputing missing values
+## 1. Code for reading in the dataset and/or processing the data
+
+```{r 1_data_processsing}
+library(dplyr)
+library(ggplot2)
+activity_data <- read.csv("~/Data science course/Coursera_R/Course5/Week2_project/data/activity.csv", stringsAsFactors = FALSE, na.strings = "NA")
+activity_data$date <- as.Date(activity_data$date)
+```
+
+## 2. Histogram of the total number of steps taken each day
+
+```{r 2_Histogram}
+Total_steps <- activity_data %>% group_by(date) %>% summarise(total=sum(steps, ma.rm=TRUE))
+hist(Total_steps$total, main = "Histogram of total steps", xlab="Total steps", col = "green")
+```
+
+## 3. Mean and median number of steps taken each day
+
+```{r 3_Mean_Median}
+Total_steps_mean_median <- activity_data %>% group_by(date) %>% summarise(Mean_steps=mean(steps, na.rm=TRUE), median_steps=median(steps, na.rm=TRUE))
+Total_steps_mean_median
+```
+
+## 4. Time series plot of the average number of steps taken
+
+```{r 4_Time_series}
+ggplot(Total_steps_mean_median, aes(date,Mean_steps)) + geom_line() + ylab("Average steps")
+```
+
+## 5. The 5-minute interval that, on average, contains the maximum number of steps
+
+```{r 5_Max_no_of_steps}
+Avg_steps_interval <- activity_data %>% group_by(interval) %>% summarise(Avg_steps=mean(steps, na.rm=TRUE))
+ggplot(Avg_steps_interval, aes(interval,Avg_steps)) + geom_line() + ylab("Average steps")
+```
+
+## 6. Code to describe and show a strategy for imputing missing data
+
+### Show missing values in data
+
+```{r 6_Missing_values}
+table(is.na(activity_data$steps))
+summary(activity_data)
+```
+
+### Replace NAs with zero
+```{r 6_Replace_NA}
+activity_data_filled <- activity_data
+activity_data_filled[is.na(activity_data_filled)] <- 0
+summary(activity_data_filled)
+```
+
+## 7. Histogram of the total number of steps taken each day after missing values are imputed
+
+```{r 7_Histogram}
+Total_steps_mean <- activity_data %>% group_by(date) %>% summarise(Mean_steps=mean(steps))
+hist(Total_steps_mean$Mean_steps, main = "Histogram of total steps", xlab="average steps", col = "green")
+```
+
+## 8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r 8_PanelPlot}
+weekdays1 <- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+activity_data_filled <- activity_data_filled %>%  mutate(wkday = factor((weekdays(activity_data_filled$date) %in% weekdays1), levels=c(FALSE, TRUE), labels=c('weekend', 'weekday')))
+Avg_steps_interval_filled <- activity_data_filled %>% group_by(interval, wkday) %>% summarise(Avg_steps_filled = mean(steps))
+ggplot(Avg_steps_interval_filled, aes(interval, Avg_steps_filled)) + geom_line() + facet_grid(wkday ~.) + ylab("Average steps") + xlab("Interval")
+
+```
 
 
 
-## Are there differences in activity patterns between weekdays and weekends?
+
